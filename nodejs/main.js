@@ -1,6 +1,5 @@
 var http = require('http');
 var dgram = require('dgram');
-var client = dgram.createSocket('udp4');
 var express = require('express');
 var querystring = require('querystring');
 var bodyParser = require('body-parser');
@@ -8,22 +7,30 @@ var bodyParser = require('body-parser');
 var app = express();
 
 var PORT = 3000;
-var ESPHOST = 'localhost';
-var ESPUDPPORT = 41234;
+var ESPHOST = '172.16.29.34';
+var ESPUDPPORT = 7777;
 var ESPTCPPORT = 80;
 
 app.get('/testing', function(req, res) {
   res.send('Hello World!');
 });
-app.post('/sendudp', function(req, res) {
-  var message = new Buffer(req.body.message);
-  client.send(message, ESPUDPPORT, ESPHOST, function(err) {
+app.get('/sendudp', function(req, res) {
+  //var message = new Buffer(req.body.message);
+  var arr = [0x00, 0x00, 0x00];
+  for (var i = 0;i < 512;i++) {
+    arr = arr.concat([0xff,0xff,0xff]);
+  }
+  var buff = new Buffer(arr);
+  var client = dgram.createSocket('udp4');
+  client.send(buff, 0, buff.length, ESPUDPPORT, ESPHOST, function(err) {
     if (err) {
       console.log('error sending datagram:');
       console.log(err);
     }
     client.close();
   });
+  res.send('Worked');
+  console.log('sent');
 });
 app.post('/sendpost', function(req, res) {
   // maybe try grabbing the data from the post request and wrapping it into the one that goes to the ESP
